@@ -1,0 +1,15 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Node stuff
+node_modules/
+dist/
+build/
+
+infra/envs/dev/.terraform/
+infra/envs/dev/terraform.tfstate*
+infra/envs/dev/terraform.tfvars
+infra/envs/dev/.terraform.lock.hcl
