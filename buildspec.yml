@@ -1,0 +1,46 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "=== Install phase: checking Node and NPM ==="
+      - node -v || echo "Node not pre-installed, will use default build image node version"
+  pre_build:
+    commands:
+      - echo "=== Pre-build phase: login to ECR and set variables ==="
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - REGION=${AWS_DEFAULT_REGION:-$AWS_REGION}
+      - REPO_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPO_NAME}"
+      - echo "ECR repository URI: ${REPO_URI}"
+      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $REPO_URI
+      - GIT_COMMIT=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION)
+      - echo "Building for commit: $GIT_COMMIT"
+  build:
+    commands:
+      - echo "=== Build phase: build app and Docker image ==="
+      - cd app
+      - npm install
+      - npm run build
+      - cd ..
+      - echo "Building Docker image..."
+      - docker build -t ${REPO_URI}:$GIT_COMMIT .
+      - docker tag ${REPO_URI}:$GIT_COMMIT ${REPO_URI}:latest
+  post_build:
+    commands:
+      - echo "=== Post-build phase: push image and update App Runner ==="
+      - docker push ${REPO_URI}:$GIT_COMMIT
+      - docker push ${REPO_URI}:latest
+      - echo "Updating App Runner service..."
+      - REGION=${AWS_DEFAULT_REGION:-$AWS_REGION}
+      - aws apprunner update-service \
+          --service-arn $APP_RUNNER_SERVICE_ARN \
+          --source-configuration "ImageRepository={ImageIdentifier=${REPO_URI}:$GIT_COMMIT,ImageRepositoryType=ECR}" \
+          --region $REGION
+      - echo "=== Tagging commit in GitHub ==="
+      - chmod +x scripts/tag_commit.sh
+      - ./scripts/tag_commit.sh $GIT_COMMIT
+
+artifacts:
+  files:
+    - '**/*'
+
