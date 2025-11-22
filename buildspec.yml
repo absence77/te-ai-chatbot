@@ -1,4 +1,3 @@
-cat > buildspec.yml << 'EOF'
 version: 0.2
 
 phases:
@@ -6,12 +5,6 @@ phases:
     commands:
       - echo "Install phase OK"
 
-  build:
-    commands:
-      - echo "Build phase OK"
-
 artifacts:
   files:
-    - '**/*'
-EOF
-
+    - "**/*"
