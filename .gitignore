@@ -13,3 +13,4 @@ infra/envs/dev/.terraform/
 infra/envs/dev/terraform.tfstate*
 infra/envs/dev/terraform.tfvars
 infra/envs/dev/.terraform.lock.hcl
+infra/envs/dev/@
