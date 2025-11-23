@@ -1,21 +1,18 @@
-FROM public.ecr.aws/docker/library/node:20-alpine AS builder
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-RUN npm run build
-
-# --- runtime-образ ---
 FROM public.ecr.aws/docker/library/node:20-alpine
 
 WORKDIR /app
-ENV NODE_ENV=production
 
-COPY --from=builder /app ./
+# Создаём простой HTTP-сервер прямо на этапе сборки
+RUN echo "const http = require('http'); \
+const server = http.createServer((req, res) => { \
+  res.writeHead(200, { 'Content-Type': 'text/plain' }); \
+  res.end('te-ai-chatbot is running on ECS Fargate\\n'); \
+}); \
+server.listen(3000, '0.0.0.0', () => { \
+  console.log('Server started on port 3000'); \
+});" > server.js
 
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+
+CMD [\"node\", \"server.js\"]
 
