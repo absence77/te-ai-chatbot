@@ -21,6 +21,9 @@ phases:
       - docker push "$ECR_REPO_URI:latest"
       - echo "Forcing ECS service deployment..."
       - aws ecs update-service --cluster te-ai-chatbot-dev --service te-ai-chatbot-dev --force-new-deployment
+      - echo "Tagging commit in GitHub..."
+      - chmod +x scripts/tag_commit.sh
+      - ./scripts/tag_commit.sh   # SHA возьмётся из CODEBUILD_RESOLVED_SOURCE_VERSION
 
 artifacts:
   files:
