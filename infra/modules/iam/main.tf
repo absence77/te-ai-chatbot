@@ -24,7 +24,6 @@ variable "codestar_connection_arn" {
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
   account_id  = data.aws_caller_identity.current.account_id
-  # Имя бакета с учётом account_id, как в модуле cicd
   bucket_name = "${local.name_prefix}-${local.account_id}-artifacts"
 }
 
@@ -67,15 +66,18 @@ resource "aws_iam_role_policy_attachment" "codebuild_apprunner" {
   policy_arn = "arn:aws:iam::aws:policy/AWSAppRunnerFullAccess"
 }
 
-# --- NEW: CodeBuild S3 artifacts access -------------------
+# --- CodeBuild S3 artifacts access -------------------
 
 data "aws_iam_policy_document" "codebuild_s3_artifacts" {
+  # Чтение и запись объектов в бакете артефактов
   statement {
     effect = "Allow"
 
     actions = [
       "s3:GetObject",
       "s3:GetObjectVersion",
+      "s3:PutObject",
+      "s3:PutObjectAcl",
     ]
 
     resources = [
@@ -83,6 +85,7 @@ data "aws_iam_policy_document" "codebuild_s3_artifacts" {
     ]
   }
 
+  # List самого бакета
   statement {
     effect = "Allow"
 
@@ -98,7 +101,7 @@ data "aws_iam_policy_document" "codebuild_s3_artifacts" {
 
 resource "aws_iam_policy" "codebuild_s3_artifacts" {
   name        = "${local.name_prefix}-codebuild-s3-artifacts"
-  description = "Allow CodeBuild to read artifacts bucket"
+  description = "Allow CodeBuild to read/write artifacts bucket"
   policy      = data.aws_iam_policy_document.codebuild_s3_artifacts.json
 }
 
@@ -106,6 +109,7 @@ resource "aws_iam_role_policy_attachment" "codebuild_s3_artifacts_attach" {
   role       = aws_iam_role.codebuild_role.name
   policy_arn = aws_iam_policy.codebuild_s3_artifacts.arn
 }
+
 
 # =========================================================
 # CodePipeline IAM Role
