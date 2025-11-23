@@ -2,7 +2,7 @@ FROM public.ecr.aws/docker/library/node:20-alpine
 
 WORKDIR /app
 
-# Создаём простой HTTP-сервер прямо на этапе сборки
+# Создаём простой HTTP-сервер
 RUN echo "const http = require('http'); \
 const server = http.createServer((req, res) => { \
   res.writeHead(200, { 'Content-Type': 'text/plain' }); \
@@ -14,5 +14,6 @@ server.listen(3000, '0.0.0.0', () => { \
 
 EXPOSE 3000
 
-CMD [\"node\", \"server.js\"]
+# ВАЖНО: без слэшей, это JSON-массив
+CMD ["node", "server.js"]
 
