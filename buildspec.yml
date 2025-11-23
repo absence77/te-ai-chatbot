@@ -5,15 +5,9 @@ phases:
     commands:
       - echo "Logging in to Amazon ECR..."
       - aws --version
-      # Получаем URI репозитория из ECR по имени, которое передано в env var ECR_REPO_NAME
-      - ECR_REPO_URI=$(aws ecr describe-repositories \
-          --repository-names "$ECR_REPO_NAME" \
-          --query 'repositories[0].repositoryUri' \
-          --output text)
+      - ECR_REPO_URI=$(aws ecr describe-repositories --repository-names "$ECR_REPO_NAME" --query 'repositories[0].repositoryUri' --output text)
       - echo "ECR_REPO_URI=$ECR_REPO_URI"
-      # Логин в ECR
-      - aws ecr get-login-password \
-        | docker login --username AWS --password-stdin "$ECR_REPO_URI"
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin "$ECR_REPO_URI"
 
   build:
     commands:
@@ -25,12 +19,8 @@ phases:
     commands:
       - echo "Pushing Docker image to ECR..."
       - docker push "$ECR_REPO_URI:latest"
-
       - echo "Forcing ECS service deployment..."
-      - aws ecs update-service \
-          --cluster te-ai-chatbot-dev \
-          --service te-ai-chatbot-dev \
-          --force-new-deployment
+      - aws ecs update-service --cluster te-ai-chatbot-dev --service te-ai-chatbot-dev --force-new-deployment
 
 artifacts:
   files:
