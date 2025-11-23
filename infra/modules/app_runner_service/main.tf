@@ -124,6 +124,12 @@ resource "aws_iam_role_policy_attachment" "task_execution_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+resource "aws_iam_role_policy_attachment" "task_execution_ssm" {
+  role       = aws_iam_role.task_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+}
+
+
 ########################
 # ECS Task Definition
 ########################
@@ -229,4 +235,3 @@ output "service_arn" {
   # В AWS provider ARN сервиса возвращается в id
   value = aws_ecs_service.this.id
 }
-

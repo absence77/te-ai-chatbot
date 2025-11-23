@@ -46,6 +46,11 @@ resource "aws_iam_role" "codebuild_role" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "codebuild_ssm" {
+  role       = aws_iam_role.codebuild_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "codebuild_ecr" {
   role       = aws_iam_role.codebuild_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
@@ -54,11 +59,6 @@ resource "aws_iam_role_policy_attachment" "codebuild_ecr" {
 resource "aws_iam_role_policy_attachment" "codebuild_logs" {
   role       = aws_iam_role.codebuild_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "codebuild_ssm" {
-  role       = aws_iam_role.codebuild_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "codebuild_apprunner" {
@@ -248,3 +248,18 @@ output "codepipeline_role_arn" {
   value = aws_iam_role.codepipeline_role.arn
 }
 
+
+resource "aws_iam_policy" "ecs_ssm_access" {
+  name = "ecs-ssm-access"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [ "ssm:GetParameter" ]
+        Resource = "*"
+      }
+    ]
+  })
+}
