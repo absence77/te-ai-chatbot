@@ -1,6 +1,11 @@
 version: 0.2
 
 phases:
+  install:
+    commands:
+      - echo "Ensuring scripts exist..."
+      - ls -R .
+
   pre_build:
     commands:
       - echo "Logging in to Amazon ECR..."
@@ -17,15 +22,13 @@ phases:
 
   post_build:
     commands:
-      - echo "Pushing Docker image to ECR..."
+      - ls -l
+      - ls -l scripts || true
+      - echo "Pushing Docker image..."
       - docker push "$ECR_REPO_URI:latest"
-      - echo "Forcing ECS service deployment..."
+      - echo "Deploying ECS..."
       - aws ecs update-service --cluster te-ai-chatbot-dev --service te-ai-chatbot-dev --force-new-deployment
-      - echo "Tagging commit in GitHub..."
+      - echo "Tagging commit..."
       - chmod +x scripts/tag_commit.sh
-      - ./scripts/tag_commit.sh   # SHA возьмётся из CODEBUILD_RESOLVED_SOURCE_VERSION
-
-artifacts:
-  files:
-    - '**/*'
+      - ./scripts/tag_commit.sh
 
