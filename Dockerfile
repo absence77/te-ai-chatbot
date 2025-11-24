@@ -1,42 +1,38 @@
 # ---------- deps ----------
-FROM node:20-alpine AS deps
+FROM public.ecr.aws/docker/library/node:20-alpine AS deps
 WORKDIR /app
 
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
-RUN \
-  if [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm install --frozen-lockfile; \
-  elif [ -f yarn.lock ]; then \
-    yarn install --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then \
-    npm ci; \
-  else \
-    npm install; \
-  fi
-
+# Устанавливаем зависимости (используем lock-файл, если есть)
+COPY package.json package-lock.json* ./
+RUN npm ci
 
 # ---------- builder ----------
 FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 WORKDIR /app
 
+# Копируем установленные зависимости из deps
 COPY --from=deps /app/node_modules ./node_modules
+# Копируем весь код приложения
 COPY . .
 
+# Собираем Next.js-приложение
 RUN npm run build
 
-
-# ---------- runtime ----------
+# ---------- runner ----------
 FROM public.ecr.aws/docker/library/node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PORT=3000
 
-COPY --from=builder /app/.next ./.next
+# Копируем артефакты билда и необходимые файлы
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# Запуск прод-сервера Next.js
+CMD ["npm", "run", "start"]
 
