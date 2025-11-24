@@ -227,6 +227,9 @@ modern scalable app stack
 
 
 
+
+
+
 [ User Browser ]
      |
      | 1. Open http://<public-ip>:3000/sign-in
@@ -257,6 +260,8 @@ modern scalable app stack
      v
 [ User Browser ]
 (Sees assistant answer in UI)
+
+
 
 
 
@@ -303,6 +308,8 @@ modern scalable app stack
 [ ECR Repository te-ai-chatbot-dev ]
 
 
+
+
 (3) Deployment to ECS
 ---------------------
 [ CodeBuild ]
@@ -325,4 +332,75 @@ modern scalable app stack
 [ Users hit http://<task-public-ip>:3000 ]
 
 
+                         +----------------------+
+                         |      Developer       |
+                         |   (your laptop)      |
+                         +----------+-----------+
+                                    |
+                                    | git push (branch: deploy_dev)
+                                    v
+                         +----------------------+
+                         |      GitHub repo     |
+                         |   absence77/te-ai-   |
+                         |       chatbot        |
+                         +----------+-----------+
+                                    |
+                                    | webhook (CodeStar connection)
+                                    v
++--------------------------------------------------------------+
+|                    AWS CodePipeline (dev)                    |
+|  Stage 1: Source (GitHub)                                    |
+|  Stage 2: Build (CodeBuild)                                  |
++----------------------+---------------------------------------+
+                       |
+                       | starts build with env: ECR_REPO_NAME,
+                       | ECS_CLUSTER_NAME, ECS_SERVICE_NAME…
+                       v
+        +-------------------------------+
+        |        AWS CodeBuild          |
+        |  - docker build               |
+        |  - push to ECR                |
+        |  - aws ecs update-service     |
+        +------------------+------------+
+                           |
+                           | docker push
+                           v
+          +-------------------------------+
+          |   Amazon ECR (te-ai-chatbot)  |
+          |   Image tag: latest           |
+          +------------------+------------+
+                           |
+                           | used by taskDefinition
+                           v
++--------------------------------------------------------------+
+|             Amazon ECS (Fargate, cluster: dev)               |
+|                                                              |
+|  +---------------- ECS Service ---------------------------+  |
+|  | service: te-ai-chatbot-dev                             |  |
+|  | desiredCount = 1                                       |  |
+|  | launchType = FARGATE                                   |  |
+|  +-----------------------+--------------------------------+  |
+|                          | creates / replaces task             |
+|                          v                                     |
+|             +-----------------------------+                   |
+|             |   Fargate Task (1 running)  |                   |
+|             |   Container: Next.js app    |                   |
+|             |   Port: 3000                |                   |
+|             +--------------+--------------+                   |
++----------------------------|-----------------------------------+
+                             |
+                             | awsvpc ENI in default VPC
+                             | public IP (e.g. 98.92.184.187)
+                             v
+                  +-----------------------------+
+                  | Security Group              |
+                  |  Ingress: TCP 3000 0.0.0.0/0|
+                  +--------------+--------------+
+                             |
+                             | HTTP :3000
+                             v
+                    +-------------------+
+                    |  User Browser     |
+                    |  (Login page)     |
+                    +-------------------+
 
