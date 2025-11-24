@@ -41,11 +41,7 @@ phases:
       - echo "Pushing Docker image..."
       - docker push "$ECR_REPO_URI:latest"
       - echo "Updating ECS service..."
-      - aws ecs update-service \
-          --cluster "$ECS_CLUSTER_NAME" \
-          --service "$ECS_SERVICE_NAME" \
-          --force-new-deployment \
-          --region "$AWS_DEFAULT_REGION"
+      - aws ecs update-service --cluster "$ECS_CLUSTER_NAME" --service "$ECS_SERVICE_NAME" --force-new-deployment --region "$AWS_DEFAULT_REGION"
       - echo "Done."
 
 artifacts:
