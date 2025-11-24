@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 
 import { type Chat } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -16,13 +15,14 @@ import {
 interface SidebarItemProps {
   chat: Chat
   children: React.ReactNode
+  // isActive делаем опциональным, но пока нигде не используем
+  isActive?: boolean
 }
 
-export function SidebarItem({ chat, children }: SidebarItemProps) {
-  const pathname = usePathname()
-  const isActive = pathname === chat.path
-
+export function SidebarItem({ chat, children, isActive }: SidebarItemProps) {
   if (!chat?.id) return null
+
+  const active = isActive ?? false
 
   return (
     <div className="relative">
@@ -41,12 +41,13 @@ export function SidebarItem({ chat, children }: SidebarItemProps) {
           <IconMessage className="mr-2" />
         )}
       </div>
+
       <Link
         href={chat.path}
         className={cn(
           buttonVariants({ variant: 'ghost' }),
           'group w-full pl-8 pr-16',
-          isActive && 'bg-accent'
+          active && 'bg-accent'
         )}
       >
         <div
@@ -56,7 +57,8 @@ export function SidebarItem({ chat, children }: SidebarItemProps) {
           <span className="whitespace-nowrap">{chat.title}</span>
         </div>
       </Link>
-      {isActive && <div className="absolute right-2 top-1">{children}</div>}
+
+      {active && <div className="absolute right-2 top-1">{children}</div>}
     </div>
   )
 }
