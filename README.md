@@ -227,4 +227,102 @@ modern scalable app stack
 
 
 
+[ User Browser ]
+     |
+     | 1. Open http://<public-ip>:3000/sign-in
+     v
+[ ECS Fargate Task ]
+(Next.js app running on PORT=3000)
+     |
+     | 2. Auth / API calls
+     |   - /sign-in
+     |   - /api/chat
+     v
+[ Supabase ]
+(Auth + Database: users, sessions, chats)
+     |
+     | 3. When user sends a message:
+     v
+[ Next.js API route /api/chat ]
+     |
+     | 4. Calls OpenAI with user's prompt + history
+     v
+[ OpenAI API ]
+     |
+     | 5. Returns model response
+     v
+[ Next.js ]
+     |
+     | 6. Streams response back to browser
+     v
+[ User Browser ]
+(Sees assistant answer in UI)
+
+
+
+(1) Developer workflow
+----------------------
+[ You on MacBook ]
+     |
+     |  git commit + git push origin deploy_dev
+     v
+[ GitHub repo te-ai-chatbot ]
+
+
+(2) CI/CD in AWS
+----------------
+[ CodeBuild Project ]
+  - reads buildspec.yml
+  - pulls source from GitHub
+  - logs in to ECR
+  - builds Docker image using Dockerfile
+  - tags image as :latest
+
+     |
+     |  docker build
+     v
+
+[ Docker build ]
+  STAGE 1: deps
+   - FROM public.ecr.aws/docker/library/node:20-alpine
+   - COPY package.json
+   - RUN npm install
+
+  STAGE 2: builder
+   - COPY source code
+   - RUN npm run build
+
+  STAGE 3: runner
+   - COPY .next, public, node_modules
+   - CMD ["npm", "run", "start"]
+
+     |
+     |  docker push
+     v
+
+[ ECR Repository te-ai-chatbot-dev ]
+
+
+(3) Deployment to ECS
+---------------------
+[ CodeBuild ]
+     |
+     | aws ecs update-service --force-new-deployment
+     v
+[ ECS Service te-ai-chatbot-dev ]
+     |
+     | launches new Fargate tasks
+     v
+[ Fargate Task ]
+  - pulls new image from ECR
+  - injects secrets from SSM
+  - starts Next.js server on PORT=3000
+  - gets public IP from AWS
+
+     |
+     | traffic from internet
+     v
+[ Users hit http://<task-public-ip>:3000 ]
+
+
 
