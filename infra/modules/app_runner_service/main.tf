@@ -129,6 +129,14 @@ resource "aws_iam_role_policy_attachment" "task_execution_ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
 }
 
+########################
+# CloudWatch Logs
+########################
+
+resource "aws_cloudwatch_log_group" "ecs_app" {
+  name              = "/ecs/${local.name_prefix}"
+  retention_in_days = 7
+}
 
 ########################
 # ECS Task Definition
@@ -161,24 +169,40 @@ resource "aws_ecs_task_definition" "this" {
         {
           name  = "NODE_ENV"
           value = "production"
+        },
+        {
+          # чтобы Next.js слушал нужный порт
+          name  = "PORT"
+          value = tostring(var.container_port)
         }
       ]
 
-      # SSM параметры (имена – как ты уже создал через module.secrets)
+      # Секреты из SSM → переменные окружения в контейнере
       secrets = [
         {
-          name      = "GITHUB_TOKEN"
-          valueFrom = "/te-ai-chatbot/dev/GITHUB_TOKEN"
+          name      = "OPENAI_API_KEY"
+          valueFrom = var.openai_api_key_ssm_arn
         },
         {
-          name      = "SUPABASE_ANON_KEY"
-          valueFrom = "/te-ai-chatbot/dev/SUPABASE_ANON_KEY"
+          name      = "NEXT_PUBLIC_SUPABASE_URL"
+          valueFrom = var.supabase_url_ssm_arn
         },
         {
-          name      = "SUPABASE_URL"
-          valueFrom = "/te-ai-chatbot/dev/SUPABASE_URL"
+          name      = "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+          valueFrom = var.supabase_anon_key_ssm_arn
         }
       ]
+      
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-region"        = "us-east-1"
+          "awslogs-group"         = aws_cloudwatch_log_group.ecs_app.name
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+
+
     }
   ])
 }

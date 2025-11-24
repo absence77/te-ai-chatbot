@@ -37,8 +37,12 @@ module "app_runner" {
   container_port = 3000
   cpu            = "1024"
   memory         = "2048"
-}
 
+  # новые параметры – тянем ARNs из модуля secrets
+  supabase_url_ssm_arn      = module.secrets.param_arns["SUPABASE_URL"]
+  supabase_anon_key_ssm_arn = module.secrets.param_arns["SUPABASE_ANON_KEY"]
+  openai_api_key_ssm_arn    = module.secrets.param_arns["OPENAI_API_KEY"]
+}
 # 4. CI/CD pipeline module
 module "cicd" {
   source       = "../../modules/cicd_pipeline"

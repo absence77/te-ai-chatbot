@@ -11,4 +11,8 @@ resource "aws_ssm_parameter" "params" {
   value       = each.value
   overwrite   = true
 }
+output "param_arns" {
+  description = "ARNs of created SSM parameters, keyed by logical name"
+  value       = { for name, p in aws_ssm_parameter.params : name => p.arn }
+}
 
