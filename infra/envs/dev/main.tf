@@ -16,6 +16,7 @@ module "secrets" {
     SUPABASE_URL      = var.supabase_url
     SUPABASE_ANON_KEY = var.supabase_anon_key
     GITHUB_TOKEN      = var.github_oauth_token
+    OPENAI_API_KEY    = var.openai_api_key
   }
 }
 

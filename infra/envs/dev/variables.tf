@@ -50,3 +50,8 @@ variable "supabase_anon_key" {
   sensitive   = true
 }
 
+variable "openai_api_key" {
+  type      = string
+  sensitive = true
+}
+

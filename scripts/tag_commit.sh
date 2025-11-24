@@ -9,6 +9,15 @@ if [ -z "${COMMIT_SHA}" ]; then
   exit 1
 fi
 
+# 1.1. Если SHA укороченный (типа 525789c) — разворачиваем его в полный через git
+if command -v git >/dev/null 2>&1; then
+  FULL_SHA="$(git rev-parse "${COMMIT_SHA}" 2>/dev/null || echo "")"
+  if [ -n "${FULL_SHA}" ]; then
+    echo "[tag_commit] Resolved short SHA '${COMMIT_SHA}' -> '${FULL_SHA}'"
+    COMMIT_SHA="${FULL_SHA}"
+  fi
+fi
+
 # 2. Проверяем переменные окружения из CodeBuild
 if [ -z "${GITHUB_OWNER:-}" ] || [ -z "${GITHUB_REPO:-}" ] || [ -z "${GITHUB_TOKEN:-}" ]; then
   echo "[tag_commit] ERROR: GITHUB_OWNER / GITHUB_REPO / GITHUB_TOKEN not set"
