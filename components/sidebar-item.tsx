@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-#import { usePathname } from 'next/navigation'
 
 import { type Chat } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -19,8 +18,8 @@ interface SidebarItemProps {
 }
 
 export function SidebarItem({ chat, children }: SidebarItemProps) {
-  #const pathname = usePathname()
-  #const isActive = pathname === chat.path
+  // Временный фикс: не используем usePathname, подсветка активного чата отключена
+  const isActive = false
 
   if (!chat?.id) return null
 
@@ -60,3 +59,4 @@ export function SidebarItem({ chat, children }: SidebarItemProps) {
     </div>
   )
 }
+
