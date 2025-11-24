@@ -5,14 +5,12 @@ env:
     AWS_DEFAULT_REGION: us-east-1
     ECR_REPO_NAME: te-ai-chatbot-dev
     ECS_CLUSTER_NAME: te-ai-chatbot-dev
-    ECS_SERVICE_ARN: arn:aws:ecs:us-east-1:921868492248:service/te-ai-chatbot-dev/te-ai-chatbot-dev
+    ECS_SERVICE_NAME: te-ai-chatbot-dev
 
 phases:
   install:
-    runtime-versions:
-      docker: 24
     commands:
-      - echo "Install phase..."
+      - echo "Install phase - nothing to install"
 
   pre_build:
     commands:
@@ -21,7 +19,7 @@ phases:
       - echo "ECR_REPO_URI=$ECR_REPO_URI"
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin "$ECR_REPO_URI"
 
-      # --- ВАЖНО: тянем секреты из SSM (те же, что в TF)
+      # --- тянем секреты из SSM для build ---
       - echo "Fetching secrets from SSM for build..."
       - export OPENAI_API_KEY=$(aws ssm get-parameter --name "/te-ai-chatbot/dev/OPENAI_API_KEY" --with-decryption --query 'Parameter.Value' --output text)
       - export NEXT_PUBLIC_SUPABASE_URL=$(aws ssm get-parameter --name "/te-ai-chatbot/dev/SUPABASE_URL" --with-decryption --query 'Parameter.Value' --output text)
@@ -45,7 +43,7 @@ phases:
       - echo "Updating ECS service..."
       - aws ecs update-service \
           --cluster "$ECS_CLUSTER_NAME" \
-          --service "$ECS_SERVICE_ARN" \
+          --service "$ECS_SERVICE_NAME" \
           --force-new-deployment \
           --region "$AWS_DEFAULT_REGION"
       - echo "Done."
