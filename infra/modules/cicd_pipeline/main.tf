@@ -156,12 +156,14 @@ resource "aws_codepipeline" "pipeline" {
       provider         = "CodeStarSourceConnection"
       version          = "1"
       output_artifacts = ["SourceOutput"]
-
+      
       configuration = {
         ConnectionArn    = var.github_connection_arn
         FullRepositoryId = "${var.github_owner}/${var.github_repo}" # absence77/te-ai-chatbot
         BranchName       = var.github_branch                         # deploy_dev
+        DetectChanges    = "true"                                    # ВКЛЮЧАЕМ автотриггер
       }
+
     }
   }
 
