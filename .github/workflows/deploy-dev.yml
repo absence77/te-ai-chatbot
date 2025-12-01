@@ -1,0 +1,27 @@
+name: Trigger CodePipeline (deploy_dev)
+
+on:
+  push:
+    branches:
+      - deploy_dev
+
+jobs:
+  trigger-codepipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Start CodePipeline execution
+        run: |
+          aws codepipeline start-pipeline-execution \
+            --name te-ai-chatbot-dev-pipeline
+
