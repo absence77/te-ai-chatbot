@@ -8,4 +8,3 @@ export default function IndexPage() {
 
   return <Chat id={id} />
 }
-
